@@ -30,8 +30,10 @@
   figure { margin: 18px 0; }
   figure img, figure video { width: 100%; height: auto; display: block; border-radius: 6px; background: #fff; }
   figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; }
-  .player { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
-  .player video { border-radius: 0; }
+  .player { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; max-width: 100%; }
+  /* videos always fit the window: full width at most, and at most 72 % of the window height */
+  video { max-width: 100%; }
+  .player video { border-radius: 0; width: 100%; height: auto; max-height: 72vh; object-fit: contain; margin: 0 auto; }
   .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
   .grid button { padding: 0; border: 2px solid transparent; border-radius: 6px; background: var(--panel); cursor: pointer;
     overflow: hidden; text-align: left; color: var(--ink); font: inherit; }
