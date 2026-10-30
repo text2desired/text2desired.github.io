@@ -71,7 +71,7 @@
 </header>
 
 <figure>
-  <img src="img/pipeline_v2.png" alt="Pipeline: text query, grounding and geometry, viewpoint selection, desired image, photometric visual servoing">
+  <img src="img/pipeline_v2.png" alt="Pipeline: text query, grounding and geometry, viewpoint selection, desired image; downstream use: photometric visual servoing">
   <figcaption>From the query “piano” to a desired image a visual servo can reach. The object is grounded and lifted to 3D;
   74 level candidate views are rendered and scored; the render at the selected pose is the desired image.</figcaption>
 </figure>
@@ -82,12 +82,13 @@ query in a scene reconstructed with 3D Gaussian Splatting. The queried object is
 and a promptable segmenter, lifted to 3D with the rendered depth, and summarised by its centroid, extent and dominant
 plane. A geometric viewpoint selection renders candidate views and scores their visibility, render reliability, a
 frontality or broadside prior and whether the whole object fits in the image with the camera in free space; the render at
-the chosen pose is the desired image. On the labelled queries of LERF-OVS, our desired images are good views more often
-than the best training photograph, CLIP render-and-score and CapFrame, and a photometric visual servo reaches them more
-often than any baseline's.</p>
+the chosen pose is the desired image. On the 67 labelled queries of LERF-OVS, our desired images are good views (object visible, whole, centred,
+well sized) more often than those of CLIP render-and-score and CapFrame, as often as the training photograph in which the
+object was detected but better centred, and always level. A photometric visual servo reaches them more often than the
+images of every baseline from small offsets. Grounding, not the viewpoint, is the main source of failure.</p>
 
 <div class="stats">
-  <div class="stat"><b>30 %</b><small>good views on LERF-OVS (best baseline 21 %)</small></div>
+  <div class="stat"><b>30 %</b><small>good views on LERF-OVS (CLIP 9 %, CapFrame 12 %)</small></div>
   <div class="stat"><b>85 %</b><small>photometric servo success, small offset</small></div>
   <div class="stat"><b>69 %</b><small>good views with ground-truth masks</small></div>
   <div class="stat"><b>0</b><small>training: zero-shot grounding, geometric selection</small></div>
@@ -126,23 +127,44 @@ distance errors, and camera velocity.</p>
 </figure>
 <p style="color:var(--muted);font-size:14px">Viewpoint selection for “piano”: 64 of the 74 candidates are far from every training photo, where the 3DGS render is unreliable, and are rejected by the coverage term; the 9 others are shown from lowest to highest score, then the selected view.</p>
 
-<h2>Reaching it with photometric visual servoing</h2>
-<p>The desired image is meant for any image-based servo. Here a photometric servo, which sees only images, starts 0.2 d*
-and 10° away from the goal and converges to it.</p>
+<h2>Downstream use: reaching it with photometric visual servoing</h2>
+<p>The method ends with the desired image and its goal pose; any image-based servo can take it as a target. We use a
+photometric servo, which sees only images, to test it: it starts 0.2 d* and 10° away from the goal and converges to it.</p>
 <figure class="player">
   <video controls muted playsinline loop preload="metadata" poster="img/servo_room_piano.jpg">
     <source src="videos/servo_room_piano.mp4" type="video/mp4">
   </video>
 </figure>
 
+<h2>A ground robot in synthetic houses</h2>
+<p>On InteriorGS houses (Habitat-GS), the camera sits on a ground robot: 1.25 m high, level, on the navigable floor.
+The viewpoint selection keeps only floor candidates the robot can reach. Each dashboard follows one query: the robot
+starts at the survey view where the object was detected, follows an A* path on the navigable grid to the selected
+floor point, turns towards the goal heading, then a 3-DOF photometric servo (forward, lateral, yaw) takes it to the
+desired image. These videos illustrate the pipeline; the evaluation is in the supplementary material of the paper.
+Top: current render, top view (navigable floor, object cloud, floor candidates coloured by score, path and
+trajectory) and the desired image. Bottom: distance and heading to the goal, photometric error and robot velocities;
+the shaded part is the servo.</p>
+<div class="player">
+  <video id="igs" controls muted playsinline loop preload="metadata" poster="img/igs_0637_dining_table.jpg">
+    <source src="videos/igs_0637_dining_table.mp4" type="video/mp4">
+  </video>
+</div>
+<div class="grid" id="igs-grid">
+  <button aria-pressed="true" data-v="igs_0637_dining_table"><img src="img/igs_0637_dining_table.jpg" alt=""><span>house 0637 · “dining table”</span></button>
+  <button aria-pressed="false" data-v="igs_0695_sofa"><img src="img/igs_0695_sofa.jpg" alt=""><span>house 0695 · “sofa”</span></button>
+  <button aria-pressed="false" data-v="igs_0651_tv"><img src="img/igs_0651_tv.jpg" alt=""><span>house 0651 · “tv”</span></button>
+  <button aria-pressed="false" data-v="igs_0637_bed"><img src="img/igs_0637_bed.jpg" alt=""><span>house 0637 · “bed”</span></button>
+</div>
+
 <h2>Results</h2>
 <p>LERF-OVS, 67 text queries scored against ground-truth 3D objects (% of queries; servo: % of runs).</p>
 <table>
   <thead><tr><th>method</th><th>good view</th><th>whole in frame</th><th>centred</th><th>level</th><th>servo small</th><th>servo large</th></tr></thead>
   <tbody>
-    <tr><td>Best training photo</td><td>21</td><td>70</td><td>30</td><td>67</td><td>70</td><td>71</td></tr>
+    <tr><td>Detected training photo</td><td>21</td><td>70</td><td>30</td><td>67</td><td>70</td><td>71</td></tr>
     <tr><td>CLIP render-and-score</td><td>9</td><td>36</td><td>19</td><td>100</td><td>59</td><td>56</td></tr>
-    <tr><td>CapFrame</td><td>12</td><td>66</td><td>31</td><td>24</td><td>66</td><td>60</td></tr>
+    <tr><td>CapFrame</td><td>12</td><td>66</td><td>31</td><td>15</td><td>60</td><td>54</td></tr>
     <tr class="ours"><td>Ours</td><td>30</td><td>60</td><td>48</td><td>100</td><td>85</td><td>76</td></tr>
   </tbody>
 </table>
@@ -174,14 +196,16 @@ and 10° away from the goal and converges to it.</p>
 <footer>Ai movement · Mohammed VI Polytechnic University</footer>
 </main>
 <script>
-  const video = document.getElementById('dash');
-  document.querySelectorAll('#dash-grid button').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('#dash-grid button').forEach(x => x.setAttribute('aria-pressed', 'false'));
-    b.setAttribute('aria-pressed', 'true');
-    video.poster = 'img/' + b.dataset.v + '.jpg';
-    video.src = 'videos/' + b.dataset.v + '.mp4';
-    video.play().catch(() => {});
-  }));
+  [['dash', 'dash-grid'], ['igs', 'igs-grid']].forEach(([vid, grid]) => {
+    const video = document.getElementById(vid);
+    document.querySelectorAll('#' + grid + ' button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('#' + grid + ' button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      video.poster = 'img/' + b.dataset.v + '.jpg';
+      video.src = 'videos/' + b.dataset.v + '.mp4';
+      video.play().catch(() => {});
+    }));
+  });
 </script>
 </body>
 </html>
